@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "litecoin.fullname" . }}
+  labels:
+    app: {{ template "litecoin.name" . }}
+    chart: {{ template "litecoin.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.statefulSet.labels }}
+{{ toYaml .Values.statefulSet.labels | indent 4 }}
+{{- end }}
+  {{- with .Values.statefulSet.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+spec:
+  serviceName: {{ template "litecoin.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "litecoin.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "litecoin.name" . }}
+        release: {{ .Release.Name }}
+{{- if .Values.podTemplate.labels }}
+{{ toYaml .Values.podTemplate.labels | indent 8 }}
+{{- end }}
+      {{- with .Values.podTemplate.annotations }}
+      annotations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.hostAliases }}
+      hostAliases:
+      {{- range .Values.hostAliases }}
+        - hostnames: {{- range .hostnames }}
+          - {{ . }}{{- end}}
+          ip: {{ .ip }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ template "litecoin.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.mount }}
+      securityContext: {{ .Values.statefulSet.securityContext | toYaml | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: LITECOIN_DATA_DIR
+            value: /litecoin-data
+          volumeMounts:
+          - name: litecoin-data
+            mountPath: /home/litecoin/.litecoin
+          {{- range $name, $_ := .Values.serviceAccountSecrets }}
+          - name: {{ $name }}-volume
+            readOnly: true
+            mountPath: /etc/{{ $name }}
+          {{- end }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+  volumeClaimTemplates:
+  - metadata:
+      name: litecoin-data
+    spec:
+      accessModes: ["ReadWriteOnce"] # Volume should not be shared by multiple nodes.
+      {{- if .Values.storageClassName }}
+      storageClassName: {{ .Values.storageClassName }} # Storage class of the volume
+      {{- end }}
+      resources:
+        requests:
+          # size of the disk where litecoin stores data
+          storage: {{ .Values.dataStorage }}

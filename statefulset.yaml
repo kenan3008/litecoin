@@ -1,0 +1,66 @@
+---
+# Source: litecoin/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: litecoin
+  labels:
+    app: litecoin
+    chart: litecoin-1.0.0
+    release: litecoin
+    heritage: Helm
+---
+# Source: litecoin/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: litecoin
+  labels:
+    app: litecoin
+    chart: litecoin-1.0.0
+    release: litecoin
+    heritage: Helm
+spec:
+  serviceName: litecoin
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litecoin
+      release: litecoin
+  template:
+    metadata:
+      labels:
+        app: litecoin
+        release: litecoin
+    spec:
+      serviceAccountName: litecoin
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      containers:
+        - name: litecoin
+          image: "dkenan/litecoin-test:latest"
+          imagePullPolicy: Always
+          env:
+          - name: LITECOIN_DATA_DIR
+            value: /litecoin-data
+          volumeMounts:
+          - name: litecoin-data
+            mountPath: /home/litecoin/.litecoin
+          resources:
+            limits:
+              cpu: 100m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 1Gi
+  volumeClaimTemplates:
+  - metadata:
+      name: litecoin-data
+    spec:
+      accessModes: ["ReadWriteOnce"] # Volume should not be shared by multiple nodes.
+      resources:
+        requests:
+          # size of the disk where litecoin stores data
+          storage: 5Gi

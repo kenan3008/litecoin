@@ -1,0 +1,49 @@
+image:
+  repository: dkenan/litecoin-test
+  tag: latest
+  pullPolicy: Always
+
+podTemplate:
+  annotations: {}
+    # kube2iam example:
+    # iam.amazonaws.com/role: role-arn
+  labels: {}
+
+statefulSet:
+  annotations: {}
+  labels: {}
+  securityContext:
+    fsGroup: 999
+    runAsUser: 999
+
+resources:
+  requests:
+    memory: 1Gi
+    cpu: 100m
+  limits:
+    memory: 1Gi
+    cpu: 100m
+
+# Disk space for litecoin to check out repositories
+dataStorage: 5Gi
+
+replicaCount: 1
+
+storageClassName: ""
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # Set the `automountServiceAccountToken` field on the pod template spec
+  # If false, no kubernetes service account token will be mounted to the pod
+  mount: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+  # Annotations for the Service Account
+  # Example:
+  #
+  # annotations:
+  #   annotation1: value
+  #   annotation2: value
+  annotations: {}
