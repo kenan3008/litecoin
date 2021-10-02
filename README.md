@@ -31,6 +31,9 @@ helm template litecoin --release-name litecoin > statefulset.yaml
 k apply -f statefulset.yaml
 ```
 
+The output of these two commands is in the `statefulset.yaml` manifest file. This file will create a service account and a stateful set with litecoin container
+in the Kubernetes cluster.
+
 ## Gitlab pipeline
 
 Gitlab pipeline is available in the `.gitlab-ci.yaml` file. It contains two stages: `build` and `deploy`.
